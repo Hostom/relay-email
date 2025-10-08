@@ -1,0 +1,12 @@
+relay-email/
+│
+├── netlify/
+│   └── functions/
+│       └── send-email.js        ← função serverless principal
+│
+├── .env                         ← contém as variáveis sensíveis (NÃO sobe pro git)
+├── .gitignore                   ← deve conter `.env` e `node_modules`
+├── package.json
+├── package-lock.json
+├── README.md
+└── netlify.toml  
