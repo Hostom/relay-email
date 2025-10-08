@@ -1,0 +1,13 @@
+{
+  "name": "relay-email-netlify",
+  "version": "1.0.0",
+  "description": "Servidor relay para envio de e-mails via SMTP, otimizado para Netlify Functions.",
+  "main": "netlify/functions/send-email.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "nodemailer": "^6.10.1"
+  }
+}
