@@ -13,8 +13,8 @@ const AUTH_TOKEN = process.env.RELAY_TOKEN;
 // --- Configuração do transporte SMTP ---
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 465,
-  secure: process.env.SMTP_PORT == 465, // Lógica corrigida para ser flexível
+  port: Number(process.env.SMTP_PORT) || 587,
+  secure: process.env.SMTP_PORT == 465, // true apenas para a porta 465, false para 587 (que usa STARTTLS)
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -32,7 +32,6 @@ transporter.verify((error, success) => {
 
 // --- Endpoint principal para envio de e-mails ---
 app.post("/send", async (req, res) => {
-  // --- Validação do token (agora lendo do cabeçalho) ---
   const providedToken = req.headers['x-relay-secret'];
 
   if (!providedToken || providedToken !== AUTH_TOKEN) {
@@ -40,10 +39,8 @@ app.post("/send", async (req, res) => {
     return res.status(403).json({ success: false, message: "Acesso negado." });
   }
 
-  // --- Leitura dos dados do e-mail (incluindo o 'cc') ---
   const { to, cc, subject, html } = req.body;
 
-  // --- Validação dos campos obrigatórios ---
   if (!to || !subject || !html) {
     return res.status(400).json({
       success: false,
@@ -55,7 +52,7 @@ app.post("/send", async (req, res) => {
     const info = await transporter.sendMail({
       from: `"Sistema de Indicações ADIM" <${process.env.SMTP_USER}>`,
       to,
-      cc, // Campo 'cc' adicionado
+      cc,
       subject,
       html,
     });
@@ -76,4 +73,3 @@ app.get("/", (req, res) => {
 // --- Inicialização do servidor ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🔥 Servidor relay rodando na porta ${PORT}`));
-
