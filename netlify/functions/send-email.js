@@ -1,16 +1,21 @@
+// ARQUIVO DO SEU RELAY NA NETLIFY (.js)
+
+// --- ALTERAÇÃO 1: Importar o módulo 'dns' ---
+const dns = require('dns'); 
 const nodemailer = require('nodemailer');
 
+// --- ALTERAÇÃO 2: Forçar a resolução de DNS para IPv4 ---
+// Esta é a correção principal para o erro 'EBADNAME' na Netlify.
+dns.setDefaultResultOrder('ipv4first');
+
 exports.handler = async (event) => {
-  // A Netlify só permite o método que corresponde ao nome da função,
-  // mas esta verificação é uma boa prática.
-  if (event.httpMethod !== 'POST') {
+  if (event.httpMethod !== 'POST' ) {
     return {
       statusCode: 405,
       body: JSON.stringify({ success: false, message: 'Método não permitido.' })
     };
   }
 
-  // --- Validação do token de segurança ---
   const providedToken = event.headers['x-relay-secret'];
   const authToken = process.env.RELAY_TOKEN;
 
@@ -23,7 +28,6 @@ exports.handler = async (event) => {
   }
 
   try {
-    // --- Leitura e validação dos dados do e-mail ---
     const { to, cc, subject, html } = JSON.parse(event.body);
 
     if (!to || !subject || !html) {
@@ -33,18 +37,17 @@ exports.handler = async (event) => {
       };
     }
     
-    // --- Configuração do transporte SMTP ---
+    // --- ALTERAÇÃO 3 (Recomendado): Simplificar a configuração do Nodemailer ---
+    // Em vez de usar host/port, o 'service: "gmail"' é mais confiável,
+    // pois lida com as configurações do Gmail automaticamente.
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 465,
-      secure: process.env.SMTP_PORT == 465, // true para 465, false para 587
+      service: 'gmail', // Mais robusto que configurar host/port manualmente
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: process.env.SMTP_USER, // Deve ser seu e-mail do Gmail
+        pass: process.env.SMTP_PASS, // Deve ser sua SENHA DE APP do Google
       },
     });
 
-    // --- Envio do E-mail ---
     await transporter.sendMail({
       from: `"Sistema de Indicações ADIM" <${process.env.SMTP_USER}>`,
       to,
@@ -60,10 +63,17 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.error("❌ Erro ao enviar e-mail:", error.message);
+    // Adicionado um log mais detalhado do erro para facilitar a depuração futura
+    console.error("❌ Erro detalhado ao enviar e-mail:", error); 
     return {
       statusCode: 500,
-      body: JSON.stringify({ success: false, message: "Falha no envio do e-mail." })
+      body: JSON.stringify({ 
+        success: false, 
+        message: "Falha no envio do e-mail.",
+        // Enviar a mensagem de erro no corpo da resposta pode ajudar a depurar
+        error: error.message 
+      })
     };
   }
 };
+git 
